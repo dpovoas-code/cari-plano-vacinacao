@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CARI Plano de Vacinação</title>
+<style>
+/* Layout: painel do médico à esquerda, folha do utente (papel A4) à direita; empilha em ecrãs estreitos. */
+:root{
+  --bg:#eef3f3; --panel:#ffffff; --ink:#1f2d33; --muted:#5b6c72;
+  --teal:#2f6f73; --teal-soft:#d9e8e6; --line:#c6d3d4; --warn:#a4481f; --warn-soft:#f8e6dc;
+  --display:"Century Schoolbook","Century Schoolbook L","TeX Gyre Schola","New Century Schoolbook",Georgia,serif;
+  --body:Calibri,Carlito,"Segoe UI",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141e22; --panel:#1c292e; --ink:#e3ecec; --muted:#9fb1b5;
+    --teal:#74bab7; --teal-soft:#24403f; --line:#35494e; --warn:#f0a27c; --warn-soft:#44291c;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141e22; --panel:#1c292e; --ink:#e3ecec; --muted:#9fb1b5;
+  --teal:#74bab7; --teal-soft:#24403f; --line:#35494e; --warn:#f0a27c; --warn-soft:#44291c;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4}
+h1,h2,h3{font-family:var(--display);font-weight:700;text-wrap:balance;margin:0}
+.top{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:baseline;padding:16px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
+.top h1{font-size:22px;color:var(--teal)}
+.top p{margin:0;color:var(--muted);font-size:14px}
+.wrap{display:grid;grid-template-columns:minmax(320px,460px) minmax(0,1fr);gap:20px;padding:20px;align-items:start}
+@media (max-width:900px){.wrap{grid-template-columns:1fr;padding:16px}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.panel h2{font-size:17px}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+.field{display:flex;flex-direction:column;gap:3px;flex:1 1 150px;font-size:14px;color:var(--muted)}
+input[type=text],input[type=date],select,textarea{font:inherit;font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:6px 8px;width:100%}
+textarea{min-height:64px;resize:vertical}
+input[type=checkbox]{width:17px;height:17px;accent-color:var(--teal);flex:none;margin-top:3px}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg label{border:1px solid var(--line);border-radius:4px;padding:6px 10px;font-size:15px;cursor:pointer;color:var(--ink)}
+.seg input{position:absolute;opacity:0}
+.seg label:has(input:checked){background:var(--teal-soft);border-color:var(--teal);font-weight:700}
+.seg label:has(input:focus-visible){outline:2px solid var(--teal);outline-offset:2px}
+details{border:1px solid var(--line);border-radius:4px;padding:8px 10px}
+details>summary{cursor:pointer;font-weight:700}
+details .inner{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.chk{display:flex;gap:8px;align-items:flex-start;cursor:pointer;font-size:15px}
+.chk small{display:block;color:var(--muted)}
+.group{font-family:var(--display);font-size:14px;color:var(--teal);margin-top:10px}
+.vac{border-top:1px solid var(--line);padding-top:8px;margin-top:8px;display:flex;flex-direction:column;gap:8px}
+.vac>label{display:flex;gap:8px;align-items:flex-start;cursor:pointer;font-weight:700}
+.vac .opts{display:none;flex-wrap:wrap;gap:8px;padding-left:25px}
+.vac.on .opts{display:flex}
+.vac.off>label{opacity:.5;cursor:not-allowed}
+.hint{flex:1 1 100%;font-size:13px;color:var(--muted);margin:0}
+.tag{font-size:12px;font-weight:700;border-radius:3px;padding:1px 6px;background:var(--teal-soft);color:var(--ink);margin-left:6px;white-space:nowrap}
+.tag.viva{background:var(--warn-soft);color:var(--warn)}
+.alert{background:var(--warn-soft);color:var(--warn);border-left:4px solid var(--warn);padding:8px 10px;border-radius:3px;font-size:14px;margin-bottom:6px}
+.info{background:var(--teal-soft);border-left:4px solid var(--teal);padding:8px 10px;border-radius:3px;font-size:14px;margin-bottom:6px}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+button{font:inherit;font-weight:700;border-radius:4px;padding:8px 14px;cursor:pointer;border:1px solid var(--teal);background:var(--teal);color:var(--panel)}
+button.sec{background:transparent;color:var(--teal)}
+button[hidden]{display:none}
+.status{font-size:14px;color:var(--muted);min-height:1.2em}
+.out{display:flex;flex-direction:column;gap:16px;min-width:0}
+.paperbox{overflow-x:auto}
+pre{white-space:pre-wrap;font-family:var(--body);font-size:15px;margin:0;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:10px}
+.foot{font-size:13px;color:var(--muted);margin:0}
+
+/* Folha do utente: sempre papel branco, por ser para imprimir */
+.sheet{background:#fff;color:#1b2529;width:100%;max-width:794px;min-width:560px;margin:0 auto;padding:36px 40px;border:1px solid #c6d3d4;box-shadow:0 2px 10px rgba(0,0,0,.12);font-family:Calibri,Carlito,Arial,sans-serif;font-size:15px;line-height:1.4;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.sheet h1{font-family:"Century Schoolbook","Century Schoolbook L","TeX Gyre Schola",Georgia,serif;font-size:26px;color:#2f6f73;margin:0 0 4px}
+.sheet h2{font-family:"Century Schoolbook","Century Schoolbook L","TeX Gyre Schola",Georgia,serif;font-size:17px;color:#2f6f73;margin:16px 0 4px}
+.sheet .sub{color:#4d5e64;margin:0 0 14px}
+.sheet .id{display:flex;gap:24px;flex-wrap:wrap;border-top:2px solid #2f6f73;border-bottom:1px solid #c6d3d4;padding:8px 0;margin-bottom:14px}
+.sheet .id span{flex:1 1 200px}
+.sheet .blank{display:inline-block;border-bottom:1px solid #1b2529;min-width:240px;height:1em;vertical-align:baseline}
+.sheet table{width:100%;border-collapse:collapse;margin:8px 0 14px}
+.sheet th{text-align:left;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#2f6f73;border-bottom:2px solid #2f6f73;padding:5px 8px}
+.sheet td{vertical-align:top;border-bottom:1px solid #c6d3d4;padding:7px 8px}
+.sheet tbody.g{border-top:2px solid #9fb8b9}
+.sheet tbody.g.alt td{background:#eef4f4}
+.sheet td.vn{width:27%;border-right:1px solid #c6d3d4}
+.sheet td.vn b{font-size:16px}
+.sheet td small{display:block;color:#4d5e64;font-size:13px}
+.sheet td.ds{white-space:nowrap}
+.sheet .done{white-space:nowrap;width:118px}
+.sheet .box{display:inline-block;width:14px;height:14px;border:1.5px solid #1b2529;vertical-align:-2px;margin-right:6px;background:#fff}
+.sheet .note{border-left:4px solid #2f6f73;background:#eaf2f1;padding:8px 12px;margin:0 0 10px}
+.sheet .note.warn{border-color:#a4481f;background:#f8e6dc}
+.sheet ul{margin:6px 0 0;padding-left:20px}
+.sheet .tl{list-style:none;padding:0;margin:6px 0 14px;border-left:3px solid #2f6f73}
+.sheet .tl li{padding:4px 0 4px 12px;position:relative}
+.sheet .tl li::before{content:"";position:absolute;left:-7px;top:11px;width:11px;height:11px;border-radius:50%;background:#2f6f73}
+.sheet .tl b{display:inline-block;min-width:215px}
+.sheet .end{margin-top:18px;border-top:1px solid #c6d3d4;padding-top:8px;font-size:13px;color:#4d5e64}
+.sheet .empty{color:#4d5e64;font-style:italic}
+@page{size:A4;margin:16mm}
+@media print{
+  html,body{background:#fff}
+  .top,.panel{display:none !important}
+  .wrap{display:block;padding:0}
+  .paperbox{overflow:visible}
+  .sheet{border:0;box-shadow:none;max-width:none;min-width:0;padding:0;margin:0}
+  .sheet tbody.g,.sheet .note,.sheet .tl li{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>CARI · Plano de vacinação</h1>
+  <p>Assinale as opções após a avaliação. Nada do que escreve aqui é guardado. <strong>v0.3, rascunho em validação (regras de 19/11/2026).</strong></p>
+</header>
+
+<main class="wrap">
+  <section class="panel" aria-label="Opções do médico">
+    <h2>Consulta</h2>
+    <div class="row">
+      <label class="field" for="dConsulta">Data da consulta<input type="date" id="dConsulta"></label>
+      <label class="field" for="nome">Nome do utente (opcional)<input type="text" id="nome" autocomplete="off" placeholder="Em branco: linha para escrever à mão"></label>
+    </div>
+    <div class="row">
+      <label class="field" for="cond">Condição subjacente (para a carta)<select id="cond">
+        <option value="">Não especificada</option>
+        <option value="dii">Doença inflamatória imunomediada</option>
+        <option value="ctx">Candidato a transplante</option>
+        <option value="tx">Transplantado</option>
+        <option value="out">Outra</option></select></label>
+      <label class="field" for="condDet">Qual? (opcional)<input type="text" id="condDet" autocomplete="off" placeholder="ex.: hepático; artrite reumatoide"></label>
+    </div>
+    <div class="seg" role="radiogroup" aria-label="Situação">
+      <label><input type="radio" name="sit" id="sitCand" value="cand" checked>Candidato (ainda não iniciou)</label>
+      <label><input type="radio" name="sit" id="sitSob" value="sob">Já sob imunossupressão</label>
+    </div>
+    <div class="row">
+      <label class="field" for="dInicio">Início previsto da imunossupressão<input type="date" id="dInicio"></label>
+      <label class="field" for="dVac">1.ª vacinação prevista (opcional; gera linha temporal)<input type="date" id="dVac"></label>
+    </div>
+    <details id="detFarm">
+      <summary id="sumFarm">Fármacos / classes (pode escolher vários)</summary>
+      <div class="inner" id="listaFarm"></div>
+      <p class="foot">Intervalos após suspensão até vacina viva. Fontes: Protocolo CARI 2026; consenso ECTRIMS/EAN 2023 para os fármacos de esclerose múltipla. Com vários fármacos, aplica-se o intervalo mais longo.</p>
+    </details>
+    <div id="avisos"></div>
+
+    <h2>Vacinas recomendadas</h2>
+    <div id="lista"></div>
+    <p class="foot">Outras vacinas vivas contraindicadas sob imunossupressão, que não constam da lista: vacina viva atenuada intranasal contra a gripe (Fluenz), vacina viva atenuada oral contra a febre tifoide (Ty21a, Vivotif) e vacina oral contra a poliomielite. As formulações inativadas podem ser usadas.</p>
+
+    <h2>Outras medidas (opcional)</h2>
+    <details id="detTB">
+      <summary>Tuberculose: tratamento preventivo</summary>
+      <div class="inner">
+        <label class="chk" for="tbOn"><input type="checkbox" id="tbOn" data-s="tb" data-k="on"><span>Incluir na folha e no registo</span></label>
+        <div class="row">
+          <label class="field" for="tbReg">Regime<select id="tbReg" data-s="tb" data-k="reg"></select></label>
+          <label class="field" for="tbIni">Data de início<input type="date" id="tbIni" data-s="tb" data-k="ini"></label>
+        </div>
+        <div class="row">
+          <label class="field" for="tbA1">Análises de controlo 1<input type="date" id="tbA1" data-s="tb" data-k="a1"></label>
+          <label class="field" for="tbA2">Análises de controlo 2<input type="date" id="tbA2" data-s="tb" data-k="a2"></label>
+          <label class="field" for="tbA3">Análises de controlo 3<input type="date" id="tbA3" data-s="tb" data-k="a3"></label>
+        </div>
+        <p class="foot" id="tbFim"></p>
+      </div>
+    </details>
+    <details id="detPJ">
+      <summary>Pneumocystis: profilaxia</summary>
+      <div class="inner">
+        <label class="chk" for="pjOn"><input type="checkbox" id="pjOn" data-s="pj" data-k="on"><span>Incluir na folha e no registo</span></label>
+        <div class="row">
+          <label class="field" for="pjF">Fármaco<select id="pjF" data-s="pj" data-k="f"></select></label>
+          <label class="field" for="pjIni">Data de início<input type="date" id="pjIni" data-s="pj" data-k="ini"></label>
+        </div>
+        <label class="field" for="pjFim">Até quando (texto para a folha)<input type="text" id="pjFim" data-s="pj" data-k="fim" autocomplete="off"></label>
+        <p class="foot">Protocolo CARI: manter durante a imunossupressão e períodos de intensificação; ponderar suspensão com prednisona &lt;15 mg/dia e recuperação da contagem linfocitária total e de CD4+.</p>
+      </div>
+    </details>
+    <details id="detSS">
+      <summary>Strongyloides: rastreio e tratamento</summary>
+      <div class="inner">
+        <label class="chk" for="ssOn"><input type="checkbox" id="ssOn" data-s="ss" data-k="on"><span>Incluir na folha e no registo</span></label>
+        <div class="row">
+          <label class="field" for="ssModo">Atitude<select id="ssModo" data-s="ss" data-k="modo">
+            <option value="trat">Tratamento com ivermectina</option>
+            <option value="ser">Serologia pedida (aguarda resultado)</option></select></label>
+          <label class="field" for="ssIni">Data do 1.º ciclo / da colheita<input type="date" id="ssIni" data-s="ss" data-k="ini"></label>
+        </div>
+        <p class="foot">Ivermectina 200 µg/kg, 1 toma por dia durante 2 dias. Se já imunocomprometido (situação "Já sob imunossupressão"), repetir o esquema ao fim de 14 dias.</p>
+      </div>
+    </details>
+
+    <h2>Notas para a folha</h2>
+    <label class="field" for="notas">Texto livre (opcional), aparece na folha do utente<textarea id="notas"></textarea></label>
+  </section>
+
+  <section class="out">
+    <div class="panel">
+      <div class="btns">
+        <button id="btnImprimir" hidden>Imprimir plano do utente</button>
+        <button id="btnFolha" hidden>Descarregar folha para imprimir</button>
+        <button id="btnCopiaFolha" class="sec">Copiar folha como texto</button>
+        <button id="btnCopiaCarta" class="sec">Copiar texto para o centro de saúde</button>
+        <button id="btnCopiaReg" class="sec">Copiar resumo para registo</button>
+      </div>
+      <div class="status" id="status" role="status"></div>
+    </div>
+    <div class="paperbox"><div id="folha"></div></div>
+    <div class="panel">
+      <h2>Texto para o centro de saúde (enfermagem / equipa de vacinação)</h2>
+      <pre id="carta"></pre>
+    </div>
+    <div class="panel">
+      <h2>Resumo para registo clínico</h2>
+      <pre id="registo"></pre>
+      <p class="foot">Fontes das regras: Protocolo CARI 2026; Livro Azul da Imunização (DGS), Partes 2 e 3; Normas DGS 013/2024, 002/2026, 006/2026, 007/2026, 007/2025, 006/2022; consenso ECTRIMS/EAN 2023; RCM. Ferramenta de apoio à comunicação: a decisão clínica é do médico.</p>
+      <p class="foot">Elaborado por Diana Póvoas et al., Equipa da Consulta de Avaliação de Risco Infecioso, Serviço de Doenças Infeciosas, Hospital de Curry Cabral – ULS São José.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+"use strict";
+/* ---------- Base de conhecimento (espelha a folha "Regras") ---------- */
+const CUSTOS = {
+  g:  {op:"Gratuita", folha:"Centro de saúde. Gratuita."},
+  gd: {op:"Gratuita com declaração médica", folha:"Centro de saúde. Gratuita: leve a declaração médica."},
+  r:  {op:"Não gratuita (receita, farmácia)", folha:"Compra na farmácia, com receita médica. Não é gratuita."},
+  c:  {op:"Gratuitidade a confirmar", folha:"Centro de saúde: confirme se é gratuita no seu caso."},
+  v:  {op:"Consulta do viajante", folha:"Consulta do viajante / centro de vacinação internacional. Não é gratuita."}
+};
+const D0 = {n:"1.ª dose", lo:["d",0]};
+const VACINAS = [
+ {id:"pn", grupo:"Vacinas não vivas", nome:"Pneumocócica", leigo:"pneumonia e meningite por pneumococo", custo:"gd", onde:"Centro de saúde ou hospital",
+  vars:[
+   {id:"seq", op:"Pn20, depois Pn23", ref:"Pn20", doses:[{n:"Pn20", lo:["d",0]},{n:"Pn23", lo:["m",6], hi:["m",12]}], carta:"Pn20 seguida de Pn23 6 a 12 meses depois (intervalo mínimo de 8 semanas), Norma DGS 013/2024"},
+   {id:"pn20", op:"Só Pn20", doses:[{n:"Pn20", lo:["d",0]}], carta:"1 dose de Pn20, Norma DGS 013/2024"},
+   {id:"pn23", op:"Só Pn23", doses:[{n:"Pn23", lo:["d",0]}], carta:"1 dose de Pn23, Norma DGS 013/2024"}]},
+ {id:"gripe", nome:"Gripe", leigo:"gripe", custo:"g", sazonal:true, onde:"Centro de saúde ou farmácia comunitária",
+  vars:[{id:"sd", op:"Dose padrão", doses:[{n:"1 dose", lo:["d",0]}], carta:"vacinação sazonal contra a gripe (dose padrão), Norma DGS 006/2026"},
+        {id:"hd", op:"Dose elevada (≥60 anos)", doses:[{n:"1 dose (dose elevada)", lo:["d",0]}], carta:"vacinação sazonal contra a gripe (dose elevada), Norma DGS 006/2026"}]},
+ {id:"covid", nome:"COVID-19", leigo:"COVID-19", custo:"g", sazonal:true, onde:"Centro de saúde ou farmácia comunitária",
+  vars:[{id:"u", op:"1 dose sazonal", doses:[{n:"1 dose", lo:["d",0]}], carta:"vacinação sazonal contra a COVID-19, Norma DGS 007/2026"}]},
+ {id:"hz", nome:"Zona (herpes zoster)", leigo:"zona", custo:"r",
+  ajuda:"Norma DGS ainda não emitida: por ora não gratuita.",
+  vars:[{id:"a", op:"Shingrix: 0 e 2 a 6 meses", doses:[D0,{n:"2.ª dose", lo:["m",2], hi:["m",6]}], carta:"vacina recombinante contra herpes zoster (Shingrix), 2 doses aos 0 e 2 a 6 meses"},
+        {id:"b", op:"Shingrix: 0 e 1 a 2 meses", doses:[D0,{n:"2.ª dose", lo:["m",1], hi:["m",2]}], carta:"vacina recombinante contra herpes zoster (Shingrix), 2 doses aos 0 e 1 a 2 meses"}]},
+ {id:"vha", nome:"Hepatite A", leigo:"hepatite A", custo:"r",
+  ajuda:"Gratuita em candidatos a transplante hepático e na doença hepática crónica.",
+  vars:[{id:"hav", op:"Havrix 1440: 0 e 6 a 12 meses", doses:[D0,{n:"2.ª dose", lo:["m",6], hi:["m",12]}], carta:"vacina contra hepatite A (Havrix 1440), 2 doses aos 0 e 6 a 12 meses"},
+        {id:"vaq", op:"Vaqta: 0 e 6 a 18 meses", doses:[D0,{n:"2.ª dose", lo:["m",6], hi:["m",18]}], carta:"vacina contra hepatite A (Vaqta), 2 doses aos 0 e 6 a 18 meses"}]},
+ {id:"vhb", nome:"Hepatite B", leigo:"hepatite B", custo:"r",
+  ajuda:"Gratuita em candidatos a transplante hepático.",
+  extra:"Hepatite B: poderá ser programada uma análise ao sangue (anti-HBs) 1 a 2 meses depois da última dose, para confirmar que ficou protegido.",
+  vars:[{id:"e", op:"Engerix-B: 0, 1 e 6 meses", doses:[D0,{n:"2.ª dose", lo:["m",1]},{n:"3.ª dose", lo:["m",6]}], carta:"vacina contra hepatite B (Engerix-B 20 µg), 3 doses aos 0, 1 e 6 meses; anti-HBs 1 a 2 meses após a última dose"},
+        {id:"dd", op:"Dose dupla: 0, 1 e 6 meses (não respondedor)", doses:[{n:"1.ª dose (dupla)", lo:["d",0]},{n:"2.ª dose (dupla)", lo:["m",1]},{n:"3.ª dose (dupla)", lo:["m",6]}], carta:"vacina contra hepatite B em dose dupla (não respondedor a vacinação prévia), aos 0, 1 e 6 meses; anti-HBs 1 a 2 meses após a última dose"},
+        {id:"h", op:"Heplisav-B: 0 e 1 mês", doses:[D0,{n:"2.ª dose", lo:["m",1]}], carta:"vacina contra hepatite B (Heplisav-B), 2 doses aos 0 e 1 mês; anti-HBs 1 a 2 meses após a última dose"}]},
+ {id:"tw", nome:"Hepatite A + B (combinada)", leigo:"hepatite A e hepatite B", custo:"r",
+  extra:"Hepatite B: poderá ser programada uma análise ao sangue (anti-HBs) 1 a 2 meses depois da última dose, para confirmar que ficou protegido.",
+  vars:[{id:"p", op:"Twinrix: 0, 1 e 6 meses", doses:[D0,{n:"2.ª dose", lo:["m",1]},{n:"3.ª dose", lo:["m",6]}], carta:"vacina combinada hepatite A/B (Twinrix Adulto), 3 doses aos 0, 1 e 6 meses"},
+        {id:"ac", op:"Twinrix acelerado: 0, 7, 21 dias e 12 meses", doses:[D0,{n:"2.ª dose", lo:["d",7]},{n:"3.ª dose", lo:["d",21], hi:["d",30]},{n:"4.ª dose", lo:["m",12]}], carta:"vacina combinada hepatite A/B (Twinrix Adulto), esquema acelerado aos 0, 7 e 21 a 30 dias, e 12 meses"}]},
+ {id:"hpv", nome:"HPV", leigo:"vírus do papiloma humano (HPV)", custo:"r",
+  custoOps:{g:"Até aos 26 anos: gratuita (PNV)", r:"27 anos ou mais: não gratuita"},
+  custoFolha:{g:"Centro de saúde. Gratuita até aos 26 anos (Programa Nacional de Vacinação).", r:"Compra na farmácia, com receita médica. A partir dos 27 anos não é gratuita."},
+  ajuda:"PNV: mulheres 18 a 26 anos; homens nascidos em 2000 a 2002 (alargamento faseado às coortes seguintes); imunocomprometidos e transplantados até aos 26 anos, sempre com 3 doses. Dos 27 aos 45 anos: decisão individual nos grupos do protocolo, não gratuita.",
+  vars:[{id:"3", op:"HPV9: 0, 1 a 2 e 6 meses", doses:[D0,{n:"2.ª dose", lo:["m",1], hi:["m",2]},{n:"3.ª dose", lo:["m",6]}], carta:"vacina HPV9, 3 doses aos 0, 1 a 2 e 6 meses (esquema de imunocomprometido), Norma DGS 002/2026"}]},
+ {id:"td", nome:"Tétano e difteria", leigo:"tétano e difteria", custo:"g",
+  vars:[{id:"r", op:"1 dose de reforço", doses:[{n:"Reforço", lo:["d",0]}], carta:"atualização do PNV: reforço de Td"},
+        {id:"p", op:"Primovacinação: 3 doses", doses:[D0,{n:"2.ª dose", lo:["d",28], hi:["d",42]},{n:"3.ª dose", lo:["m",7], hi:["m",13], rel:"6 a 12 meses depois da 2.ª dose"}], carta:"primovacinação Td, 3 doses (0, 4 a 6 semanas, e 6 a 12 meses após a 2.ª)"}]},
+ {id:"macwy", nome:"Meningocócica ACWY", leigo:"meningite por meningococos A, C, W e Y", custo:"g",
+  vars:[{id:"u", op:"1 dose", doses:[{n:"1 dose", lo:["d",0]}], carta:"vacina meningocócica ACWY, 1 dose, Norma DGS 05/2025"}]},
+ {id:"menb", nome:"Meningocócica B", leigo:"meningite por meningococo B", custo:"g",
+  vars:[{id:"u", op:"Bexsero: 2 doses, intervalo ≥1 mês", doses:[D0,{n:"2.ª dose", lo:["m",1], aberto:true}], carta:"vacina meningocócica B (Bexsero), 2 doses com intervalo mínimo de 1 mês, Norma DGS 05/2025"}]},
+ {id:"hib", nome:"Haemophilus influenzae b", leigo:"infeções graves por Haemophilus (Hib)", custo:"g",
+  vars:[{id:"u", op:"1 dose", doses:[{n:"1 dose", lo:["d",0]}], carta:"vacina Hib, 1 dose, no âmbito do PNV para pessoas com alterações imunitárias (Livro Azul da Imunização, DGS, cap. 20, secção 4.5.1)"}]},
+ {id:"mpox", nome:"Mpox", leigo:"mpox", custo:"c", tag:"não replicativa", onde:"Ponto de vacinação mpox, com declaração de elegibilidade",
+  vars:[{id:"2", op:"MVA-BN: 2 doses, intervalo ≥28 dias", doses:[D0,{n:"2.ª dose", lo:["d",28], aberto:true}], carta:"vacina contra mpox (MVA-BN), 2 doses com intervalo mínimo de 28 dias, por via subcutânea se imunossupressão grave, Norma DGS 006/2022 (atualizada a 21/11/2024)"},
+        {id:"1", op:"MVA-BN: 1 dose", doses:[{n:"1 dose", lo:["d",0]}], carta:"vacina contra mpox (MVA-BN), 1 dose, por via subcutânea se imunossupressão grave, Norma DGS 006/2022 (atualizada a 21/11/2024)"}]},
+ {id:"vsr", nome:"Vírus sincicial respiratório", leigo:"infeção respiratória por VSR", custo:"r", opcional:true,
+  vars:[{id:"u", op:"1 dose", doses:[{n:"1 dose", lo:["d",0]}], carta:"vacina contra VSR, 1 dose (opcional; sem norma DGS para adultos)"}]},
+
+ {id:"polio", grupo:"Viagem ou regresso ao país de origem (opcional, não vivas)", viagem:true, nome:"Poliomielite (inativada)", leigo:"poliomielite", custo:"c",
+  ajuda:"Viajantes para áreas com casos ou transmissão nos últimos 12 meses; idealmente 2 semanas antes da partida.",
+  vars:[{id:"r", op:"VIP: 1 dose de reforço", doses:[{n:"Reforço", lo:["d",0]}], carta:"vacina inativada contra a poliomielite (VIP), 1 dose de reforço (viagem para área com transmissão)"},
+        {id:"p", op:"VIP: 3 doses (não vacinado)", doses:[D0,{n:"2.ª dose", lo:["m",1], aberto:true},{n:"3.ª dose", lo:["m",7], hi:["m",13]}], carta:"vacina inativada contra a poliomielite (VIP), primovacinação com 3 doses (0, 1 e 7 a 13 meses)"}]},
+ {id:"tif", viagem:true, nome:"Febre tifoide (injetável)", leigo:"febre tifoide", custo:"v",
+  ajuda:"Typhim Vi: obtém-se nos centros de vacinação internacional, com prescrição. A vacina oral (Vivotif) é viva e está contraindicada.",
+  vars:[{id:"u", op:"Typhim Vi: 1 dose, 2 semanas antes da viagem", doses:[{n:"1 dose", lo:["d",0]}], quando0:"Cerca de 2 semanas antes da viagem", carta:"vacina polissacarídica injetável contra a febre tifoide (Typhim Vi), 1 dose cerca de 2 semanas antes da exposição; reforço aos 3 anos se o risco se mantiver"}]},
+ {id:"col", viagem:true, nome:"Cólera (oral inativada)", leigo:"cólera", custo:"r",
+  ajuda:"Dukoral: concluir pelo menos 1 semana antes da viagem; reforço aos 2 anos.",
+  vars:[{id:"u", op:"Dukoral: 2 doses, intervalo de 1 a 6 semanas", doses:[D0,{n:"2.ª dose", lo:["d",7], hi:["d",42]}], carta:"vacina oral inativada contra a cólera (Dukoral), 2 doses com intervalo de 1 a 6 semanas, concluída pelo menos 1 semana antes da exposição"}]},
+
+ {id:"vaspr", grupo:"Vacinas vivas (só antes de iniciar a imunossupressão)", viva:true, nome:"Sarampo, papeira e rubéola (VASPR)", leigo:"sarampo, papeira e rubéola", custo:"g",
+  vars:[{id:"1", op:"1 dose", doses:[{n:"1 dose", lo:["d",0]}], carta:"VASPR, 1 dose"},
+        {id:"2", op:"2 doses, intervalo de 4 semanas", doses:[D0,{n:"2.ª dose", lo:["d",28], aberto:true}], carta:"VASPR, 2 doses com intervalo mínimo de 4 semanas"}]},
+ {id:"var", viva:true, nome:"Varicela", leigo:"varicela", custo:"r",
+  vars:[{id:"vx", op:"Varivax: 2 doses, 4 a 8 semanas", doses:[D0,{n:"2.ª dose", lo:["d",28], hi:["d",56]}], carta:"vacina contra varicela (Varivax), 2 doses com intervalo de 4 a 8 semanas"},
+        {id:"vl", op:"Varilrix: 2 doses, 6 semanas", doses:[D0,{n:"2.ª dose", lo:["d",42]}], carta:"vacina contra varicela (Varilrix), 2 doses com intervalo de 6 semanas (mínimo 4)"}]},
+ {id:"fa", viva:true, viagem:true, opcional:true, nome:"Febre amarela", leigo:"febre amarela (viagens)", custo:"v",
+  vars:[{id:"u", op:"1 dose (consulta do viajante)", doses:[{n:"1 dose", lo:["d",0]}], carta:"vacina contra febre amarela, a avaliar em consulta do viajante"}]},
+ {id:"den", viva:true, viagem:true, opcional:true, nome:"Dengue (Qdenga)", leigo:"dengue (viagens)", custo:"v",
+  ajuda:"Vacina viva: 2 doses com 3 meses de intervalo, o que exige pelo menos 4 meses até ao início da imunossupressão.",
+  vars:[{id:"u", op:"Qdenga: 2 doses, 0 e 3 meses", doses:[D0,{n:"2.ª dose", lo:["m",3]}], carta:"vacina viva atenuada contra a dengue (Qdenga), 2 doses aos 0 e 3 meses, por via subcutânea"}]}
+];
+/* Intervalos após suspensão até vacina viva. sem = semanas para ordenar; pre = dias mínimos antes do início;
+   semIS = não considerado imunossupressor para efeitos de vacinas vivas. */
+const FARMACOS = [
+ {id:"cort", op:"Corticoterapia sistémica em dose elevada", pos:"4 semanas", sem:4},
+ {id:"conv", op:"Inibidores de mTOR e da calcineurina, azatioprina, micofenolato, ciclofosfamida", pos:"4 semanas", sem:4},
+ {id:"mtx", op:"Metotrexato em dose elevada", pos:"4 a 12 semanas", sem:12},
+ {id:"lef", op:"Leflunomida", pos:"3 a 6 meses sem washout (cerca de 4 semanas após início de washout)", sem:26},
+ {id:"teri", op:"Teriflunomida", pos:"pelo menos 6 meses sem eliminação acelerada (descritos 3,5 meses a 2 anos); com eliminação acelerada, 1,5 meses após nível plasmático <0,02 mg/L", sem:26},
+ {id:"eta", op:"Etanercept", pos:"4 semanas", sem:4},
+ {id:"tnf", op:"Anti-TNFα, exceto etanercept", pos:"3 meses", sem:13},
+ {id:"cito", op:"Anti-IL-1, anti-IL-6, anti-IL-17, anti-IL-23; vedolizumab", pos:"4 semanas", sem:4},
+ {id:"celt", op:"Abatacept, basiliximab", pos:"3 meses", sem:13},
+ {id:"cin", op:"Inibidores de cinase (iJAK, BCR-ABL, BTK)", pos:"4 semanas", sem:4},
+ {id:"nat", op:"Natalizumab", pos:"mais de 3 meses", sem:13},
+ {id:"fingo", op:"Fingolimod", pos:"mais de 2 meses", sem:9},
+ {id:"sipo", op:"Siponimod", pos:"4 semanas", sem:4},
+ {id:"oza", op:"Ozanimod", pos:"3 meses", sem:13},
+ {id:"pone", op:"Ponesimod", pos:"2 a 4 semanas", sem:4},
+ {id:"dmf", op:"Fumarato de dimetilo", pos:"até normalização da contagem linfocitária", sem:1, lab:true},
+ {id:"clad", op:"Cladribina", pos:"até normalização da contagem linfocitária (30 a 90 semanas após a última dose)", sem:90, lab:true},
+ {id:"ofa", op:"Ofatumumab", pos:"até repopulação de células B (cerca de 40 semanas)", sem:40, lab:true},
+ {id:"cd20", op:"Rituximab, obinutuzumab", pos:"até repopulação de células B (mais de 12 meses)", sem:52, lab:true},
+ {id:"ocr", op:"Ocrelizumab", pos:"até repopulação de células B (mais de 18 meses)", sem:78, lab:true, pre:42},
+ {id:"ubl", op:"Ublituximab", pos:"até repopulação de células B (cerca de 18 meses)", sem:78, lab:true},
+ {id:"alem", op:"Alemtuzumab", pos:"individualizar: até normalização da contagem linfocitária (habitualmente 6 a 12 meses)", sem:52, lab:true, pre:42},
+ {id:"ifn", op:"Interferão beta, acetato de glatirâmero", pos:"sem intervalo (imunomoduladores, não imunossupressores)", sem:0, semIS:true},
+ {id:"seg", op:"Denosumab, anti-IL-5, omalizumab, inibidores do complemento", pos:"sem intervalo", sem:0, semIS:true}
+];
+/* Tratamento preventivo da tuberculose (Protocolo CARI 2026, Tabela 3; posologia para >50 kg) */
+const TB = [
+ {id:"3HP", op:"3HP: isoniazida + rifapentina, semanal, 3 meses", meses:3, leigo:"Isoniazida + rifapentina, 1 vez por semana, durante 3 meses, com piridoxina", reg:"3HP (isoniazida 900 mg + rifapentina 900 mg, semanal, 3 meses; com piridoxina)"},
+ {id:"4R", op:"4R: rifampicina, diária, 4 meses", meses:4, leigo:"Rifampicina, todos os dias, durante 4 meses", reg:"4R (rifampicina 600 mg/dia, 4 meses)"},
+ {id:"3HR", op:"3HR: isoniazida + rifampicina, diária, 3 meses", meses:3, leigo:"Isoniazida + rifampicina, todos os dias, durante 3 meses, com piridoxina", reg:"3HR (isoniazida 300 mg + rifampicina 600 mg/dia, 3 meses; com piridoxina)"},
+ {id:"6H", op:"6H: isoniazida, diária, 6 meses", meses:6, leigo:"Isoniazida, todos os dias, durante 6 meses, com piridoxina", reg:"6H (isoniazida 300 mg/dia, 6 meses; com piridoxina)"},
+ {id:"9H", op:"9H: isoniazida, diária, 9 meses", meses:9, leigo:"Isoniazida, todos os dias, durante 9 meses, com piridoxina", reg:"9H (isoniazida 300 mg/dia, 9 meses; com piridoxina)"},
+ {id:"1HP", op:"1HP: isoniazida + rifapentina, diária, 1 mês", meses:1, leigo:"Isoniazida + rifapentina, todos os dias, durante 1 mês, com piridoxina", reg:"1HP (isoniazida 300 mg + rifapentina 600 mg/dia, 1 mês; com piridoxina)"}
+];
+const PJ = [
+ {id:"t1", op:"TMP/SMX 400/80 mg, 1 vez por dia", leigo:"Cotrimoxazol (sulfametoxazol + trimetoprim) 400/80 mg, 1 comprimido por dia"},
+ {id:"t3", op:"TMP/SMX 800/160 mg, 3 vezes por semana", leigo:"Cotrimoxazol (sulfametoxazol + trimetoprim) 800/160 mg, 1 comprimido 3 vezes por semana"},
+ {id:"ato", op:"Atovaquona 1500 mg/dia", leigo:"Atovaquona 1500 mg por dia"},
+ {id:"pen", op:"Pentamidina em aerossol 300 mg/mês", leigo:"Pentamidina em aerossol, 1 vez por mês"},
+ {id:"dap", op:"Dapsona 50 a 100 mg, 1 a 2 vezes por dia", leigo:"Dapsona, conforme a receita"}
+];
+const VIVAS_TXT = "VASPR, varicela, febre amarela, dengue, vacina intranasal contra a gripe, vacina oral contra a febre tifoide Ty21a";
+
+/* ---------- Datas ---------- */
+function parse(s){ if(!s) return null; const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
+function iso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function soma(d,[u,n]){ const r=new Date(d.getTime()); if(u==="d"){ r.setDate(r.getDate()+n); } else { const dia=r.getDate(); r.setDate(1); r.setMonth(r.getMonth()+n); const ult=new Date(r.getFullYear(),r.getMonth()+1,0).getDate(); r.setDate(Math.min(dia,ult)); } return r; }
+function fmt(d){ return d.toLocaleDateString("pt-PT",{day:"numeric",month:"long",year:"numeric"}); }
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function minus(s){ return s.charAt(0).toLowerCase()+s.slice(1); }
+function unid([u,n]){ if(u==="m") return [n, n===1?"mês":"meses"]; if(n%7===0 && n>=7) return [n/7, n===7?"semana":"semanas"]; return [n, n===1?"dia":"dias"]; }
+function intervalo(d){
+  const [a,ua] = unid(d.lo);
+  if(!d.hi) return a+" "+ua;
+  const [b,ub] = unid(d.hi);
+  if(ua===ub || (ua==="mês"&&ub==="meses") || (ua==="semana"&&ub==="semanas")) return a+" a "+b+" "+ub;
+  return (d.lo[0]==="d" && d.hi[0]==="d") ? d.lo[1]+" a "+d.hi[1]+" dias" : a+" "+ua+" a "+b+" "+ub;
+}
+
+/* ---------- Estado (só em memória) ---------- */
+const hoje = new Date();
+const st = { consulta: iso(hoje), nome:"", sit:"cand", inicio:"", dvac:"", cond:"", condDet:"", notas:"", viajante:false,
+  farm:{}, sel:{},
+  tb:{on:false, reg:"3HP", ini:"", a1:"", a2:"", a3:""},
+  pj:{on:false, f:"t1", ini:"", fim:"Enquanto mantiver o tratamento que diminui as defesas, salvo indicação em contrário"},
+  ss:{on:false, modo:"trat", ini:""} };
+VACINAS.forEach(v=>{ st.sel[v.id] = {on:false, v:v.vars[0].id, custo:v.custo, d1:""}; });
+const $ = id => document.getElementById(id);
+
+/* ---------- Formulário (construído uma vez) ---------- */
+function montaForm(){
+  $("dConsulta").value = st.consulta;
+  $("listaFarm").innerHTML = FARMACOS.map(f=>`<label class="chk" for="f-${f.id}"><input type="checkbox" id="f-${f.id}" data-f="${f.id}"><span>${esc(f.op)}<small>${esc(f.pos)}${f.pre?"; antes do início: 6 semanas":""}</small></span></label>`).join("");
+  $("tbReg").innerHTML = TB.map(r=>`<option value="${r.id}">${esc(r.op)}</option>`).join("");
+  $("pjF").innerHTML = PJ.map(r=>`<option value="${r.id}">${esc(r.op)}</option>`).join("");
+  $("pjFim").value = st.pj.fim;
+  let h = "";
+  VACINAS.forEach(v=>{
+    if(v.grupo){
+      h += `<div class="group">${esc(v.grupo)}</div>`;
+      if(v.id==="polio") h += `<label class="chk" for="viajante" style="margin-top:8px"><input type="checkbox" id="viajante"><span>Recomendar Consulta do Viajante<small>Nota na folha: marcar 4 a 8 semanas antes da partida</small></span></label>`;
+    }
+    const ops = Object.keys(CUSTOS).filter(k=> v.custoOps ? k in v.custoOps : (k!=="v" || v.viagem));
+    h += `<div class="vac" id="vac-${v.id}">
+      <label for="on-${v.id}"><input type="checkbox" id="on-${v.id}" data-v="${v.id}" data-k="on">
+        <span>${esc(v.nome)}${v.viva?'<span class="tag viva">viva</span>':''}${v.opcional?'<span class="tag">opcional</span>':''}${v.tag?'<span class="tag">'+esc(v.tag)+'</span>':''}</span></label>
+      <div class="opts">
+        ${v.vars.length>1?`<label class="field" for="var-${v.id}">Esquema<select id="var-${v.id}" data-v="${v.id}" data-k="v">${v.vars.map(x=>`<option value="${x.id}">${esc(x.op)}</option>`).join("")}</select></label>`:""}
+        <label class="field" for="custo-${v.id}">Acesso<select id="custo-${v.id}" data-v="${v.id}" data-k="custo">${ops.map(k=>`<option value="${k}"${k===v.custo?" selected":""}>${esc(v.custoOps?v.custoOps[k]:CUSTOS[k].op)}</option>`).join("")}</select></label>
+        ${v.sazonal?"":`<label class="field" for="d1-${v.id}">1.ª dose a partir de<input type="date" id="d1-${v.id}" data-v="${v.id}" data-k="d1"></label>`}
+        ${v.ajuda?`<p class="hint">${esc(v.ajuda)}</p>`:""}
+      </div></div>`;
+  });
+  $("lista").innerHTML = h;
+}
+
+/* ---------- Cálculo ---------- */
+function farms(){ return FARMACOS.filter(f=>st.farm[f.id]); }
+function semIS(){ const fs=farms(); return fs.length>0 && fs.every(f=>f.semIS); }
+function vivasBloqueadas(){ return st.sit==="sob" && !semIS(); }
+function preDias(){ return Math.max(28, ...farms().map(f=>f.pre||28)); }
+function farmDeterminante(){ const fs=farms().filter(f=>!f.semIS); if(!fs.length) return null; return fs.slice().sort((a,b)=>b.sem-a.sem)[0]; }
+function custoFolha(v,s){ const base = v.custoFolha && v.custoFolha[s.custo] ? v.custoFolha[s.custo] : CUSTOS[s.custo].folha; return v.onde ? base.replace("Centro de saúde", v.onde) : base; }
+function custoOp(v,s){ return (v.custoOps && v.custoOps[s.custo]) || CUSTOS[s.custo].op; }
+function plano(){
+  const base = parse(st.consulta) || hoje;
+  const geral = parse(st.dvac);
+  const linhas = [];
+  VACINAS.forEach(v=>{
+    const s = st.sel[v.id]; if(!s.on) return;
+    if(v.viva && vivasBloqueadas()) return;
+    const vr = v.vars.find(x=>x.id===s.v) || v.vars[0];
+    const dProprio = parse(s.d1);
+    const comData = !!(dProprio || geral);
+    const d1 = dProprio || geral || base;
+    vr.doses.forEach((d,i)=>{
+      const lo = soma(d1,d.lo), hi = d.hi ? soma(d1,d.hi) : null;
+      let quando, dataTxt = null;
+      if(v.sazonal) quando = "Neste outono-inverno. Repetir todos os anos.";
+      else if(i===0){ quando = comData ? "A partir de "+fmt(lo) : (vr.quando0 || "Logo que possível"); if(comData) dataTxt = fmt(lo); }
+      else {
+        quando = d.rel || ((d.aberto?"Pelo menos ":"")+intervalo(d)+" depois da "+(vr.ref||"1.ª dose"));
+        if(comData){ dataTxt = hi ? "entre "+fmt(lo)+" e "+fmt(hi) : d.aberto ? "a partir de "+fmt(lo) : "por volta de "+fmt(lo); }
+      }
+      linhas.push({v, vr, s, dose:d.n, lo, hi, quando, dataTxt, comData, d1, ord:VACINAS.indexOf(v), i, custo:custoFolha(v,s)});
+    });
+  });
+  linhas.sort((a,b)=> (a.v.sazonal?0:1)-(b.v.sazonal?0:1) || a.d1-b.d1 || a.ord-b.ord || a.i-b.i);
+  return linhas;
+}
+function limiteVivas(){ const i=parse(st.inicio); if(!i) return null; return soma(i,["d",-preDias()]); }
+function limiteNaoVivas(){ const i=parse(st.inicio); if(!i) return null; return soma(i,["d",-14]); }
+
+/* Outras medidas: devolve itens {titulo, como, datas:[{d,txt}], reg} */
+function outras(){
+  const o = [];
+  if(st.tb.on){
+    const r = TB.find(x=>x.id===st.tb.reg) || TB[0], ini = parse(st.tb.ini);
+    const datas = [];
+    if(ini){ datas.push({d:ini, txt:"Início do tratamento preventivo da tuberculose"}); datas.push({d:soma(ini,["m",r.meses]), txt:"Fim previsto do tratamento preventivo da tuberculose"}); }
+    ["a1","a2","a3"].forEach(k=>{ const d=parse(st.tb[k]); if(d) datas.push({d, txt:"Análises de controlo (tratamento da tuberculose)"}); });
+    o.push({titulo:"Tratamento preventivo da tuberculose", como:r.leigo, datas, reg:"TB latente: "+r.reg});
+  }
+  if(st.pj.on){
+    const f = PJ.find(x=>x.id===st.pj.f) || PJ[0], ini = parse(st.pj.ini);
+    const datas = ini ? [{d:ini, txt:"Início da prevenção da pneumonia por Pneumocystis"}] : [];
+    o.push({titulo:"Prevenção da pneumonia por Pneumocystis", como:f.leigo+(st.pj.fim.trim()?". "+st.pj.fim.trim().replace(/\.+$/,""):""), datas, reg:"Profilaxia de PPJ: "+f.op+(st.pj.fim.trim()?" ("+minus(st.pj.fim.trim())+")":"")});
+  }
+  if(st.ss.on){
+    const ini = parse(st.ss.ini), datas = [], rep14 = st.sit==="sob";
+    if(st.ss.modo==="trat"){
+      if(ini){ datas.push({d:ini, txt:"Ivermectina"+(rep14?": 1.º ciclo":"")+" (1 toma por dia, 2 dias seguidos)"}); if(rep14) datas.push({d:soma(ini,["d",14]), txt:"Ivermectina: 2.º ciclo (1 toma por dia, 2 dias seguidos)"}); }
+      o.push({titulo:"Tratamento de Strongyloides (parasita intestinal)", como:"Ivermectina, 1 toma por dia durante 2 dias seguidos"+(rep14?", repetida 14 dias depois":""), datas, reg:"Strongyloides: ivermectina 200 µg/kg, 1 toma/dia durante 2 dias"+(rep14?", repetida ao fim de 14 dias (imunocomprometido)":"")});
+    } else {
+      if(ini) datas.push({d:ini, txt:"Análise de Strongyloides (colheita)"});
+      o.push({titulo:"Rastreio de Strongyloides (parasita intestinal)", como:"Análise ao sangue pedida. Se for positiva, será proposto tratamento com ivermectina", datas, reg:"Strongyloides: serologia pedida; tratar se positiva"});
+    }
+  }
+  return o;
+}
+
+function avisos(linhas){
+  const a = [], fs = farms(), det = farmDeterminante();
+  const vivasSel = VACINAS.filter(v=>v.viva && st.sel[v.id].on);
+  if(fs.length>1 && det) a.push(`<div class="info">Vários fármacos assinalados: após suspensão aplica-se o intervalo mais longo, o de <b>${esc(minus(det.op))}</b> (${esc(det.pos)}).${fs.some(f=>f.lab && f!==det)?" Há ainda fármacos que exigem normalização laboratorial.":""}</div>`);
+  if(st.sit==="sob"){
+    if(semIS()) a.push(`<div class="info">Fármaco(s) assinalado(s) sem efeito imunossupressor relevante para vacinas vivas: não ficam bloqueadas. Decisão caso a caso.</div>`);
+    else a.push(`<div class="alert"><b>Vacinas vivas contraindicadas</b> sob imunossupressão moderada a grave.${det?` Após suspensão de ${esc(minus(det.op))}: ${esc(det.pos)}.`:" Assinale o(s) fármaco(s) para ver o intervalo após suspensão."}</div>`);
+  } else if(vivasSel.length){
+    const lim = limiteVivas();
+    if(!lim) a.push(`<div class="alert">Vacinas vivas assinaladas: indique o início previsto para calcular a data limite (4 semanas antes; 6 semanas para alemtuzumab e ocrelizumab).</div>`);
+    else{
+      const tarde = linhas.filter(l=>l.v.viva && l.lo>lim);
+      a.push(`<div class="${tarde.length?"alert":"info"}">Vacinas vivas: última dose até <b>${fmt(lim)}</b> (${preDias()/7} semanas antes do início).${tarde.length?" <b>O esquema assinalado não cabe neste prazo:</b> "+tarde.map(l=>esc(l.v.nome+" ("+l.dose+")")).join(", ")+".":""}</div>`);
+    }
+  }
+  if(st.sit==="cand" && vivasSel.length>1) a.push(`<div class="info">Mais do que uma vacina viva injetável: administrar no mesmo dia ou com intervalo mínimo de 4 semanas. Se o intervalo não for respeitado, repetir a última 4 ou mais semanas depois.</div>`);
+  if(st.sit==="cand" && st.sel.vaspr.on) a.push(`<div class="info">VASPR e teste tuberculínico: fazer o teste antes da vacina, ou vacinar no dia da leitura; caso contrário, aguardar 4 semanas após a VASPR (anergia temporária).</div>`);
+  $("avisos").innerHTML = a.join("");
+}
+
+/* ---------- Folha do utente ---------- */
+function grupos(linhas){ const g=[]; linhas.forEach(l=>{ const u=g[g.length-1]; if(u && u.v===l.v) u.ls.push(l); else g.push({v:l.v, ls:[l]}); }); return g; }
+function linhaTemporal(linhas, outs){
+  const ev = [];
+  linhas.forEach(l=>{ if(l.comData && !l.v.sazonal) ev.push({d:l.lo, quando: l.hi ? "Entre "+fmt(l.lo)+" e "+fmt(l.hi) : fmt(l.lo), txt:l.v.nome+" ("+l.dose+")"}); });
+  outs.forEach(o=>o.datas.forEach(x=>ev.push({d:x.d, quando:fmt(x.d), txt:x.txt})));
+  const i = parse(st.inicio); if(i && st.sit==="cand" && ev.length) ev.push({d:i, quando:fmt(i), txt:"Início previsto do tratamento imunossupressor/imunomodulador"});
+  ev.sort((a,b)=>a.d-b.d);
+  return ev;
+}
+function folhaHTML(linhas){
+  const base = parse(st.consulta) || hoje;
+  const temViva = linhas.some(l=>l.v.viva);
+  const limV = limiteVivas(), limN = limiteNaoVivas();
+  const extras = [...new Set(linhas.filter(l=>l.v.extra).map(l=>l.v.extra))];
+  const outs = outras(), det = farmDeterminante();
+  let h = `<div class="sheet"><h1>O seu plano de vacinação</h1>
+  <p class="sub">Consulta de Avaliação de Risco Infecioso (CARI)</p>
+  <div class="id"><span>Nome: ${st.nome.trim()?`<b>${esc(st.nome.trim())}</b>`:'<span class="blank"></span>'}</span><span>Data da consulta: <b>${fmt(base)}</b></span></div>
+  <p>${st.sit==="sob"?"Está a fazer um tratamento que diminui as defesas do organismo.":"Vai iniciar um tratamento que diminui as defesas do organismo."} As vacinas abaixo ajudam a protegê-lo de infeções. Marque cada uma quando a fizer.</p>`;
+  if(!linhas.length) h += `<p class="empty">Ainda não há vacinas assinaladas.</p>`;
+  else{
+    h += `<table><thead><tr><th>Vacina</th><th>Dose</th><th>Quando</th><th>Onde e custo</th><th>Feita em</th></tr></thead>`;
+    grupos(linhas).forEach((g,gi)=>{
+      h += `<tbody class="g${gi%2?" alt":""}">`;
+      g.ls.forEach((l,i)=>{
+        h += `<tr>${i===0?`<td class="vn" rowspan="${g.ls.length}"><b>${esc(g.v.nome)}</b><small>Protege contra ${esc(g.v.leigo)}</small></td>`:""}<td class="ds">${esc(l.dose)}</td><td>${esc(l.quando)}</td>${i===0?`<td rowspan="${g.ls.length}">${esc(l.custo)}</td>`:""}<td class="done"><span class="box"></span>__ /__ /____</td></tr>`;
+      });
+      h += `</tbody>`;
+    });
+    h += `</table>`;
+  }
+  const ev = linhaTemporal(linhas, outs);
+  if(ev.length) h += `<h2>Calendário previsto</h2><ul class="tl">${ev.map(e=>`<li><b>${esc(e.quando)}</b> ${esc(e.txt)}</li>`).join("")}</ul>`;
+  if(outs.length){
+    h += `<h2>Outros tratamentos preventivos</h2><table><thead><tr><th>O quê</th><th>Como</th></tr></thead><tbody>${outs.map(o=>`<tr><td class="vn"><b>${esc(o.titulo)}</b></td><td>${esc(o.como)}.</td></tr>`).join("")}</tbody></table>`;
+  }
+  if(temViva) h += `<div class="note warn"><b>Atenção às vacinas vivas deste plano.</b> Só podem ser feitas antes de iniciar o tratamento imunossupressor/imunomodulador${limV?`: a última dose tem de ser dada até <b>${fmt(limV)}</b>, desde que se mantenha a data prevista de início do tratamento imunossupressor/imunomodulador`:""}. Se essa data for antecipada, fale com a equipa da consulta. Depois de iniciar esse tratamento, não as faça sem falar com o seu médico.</div>`;
+  if(limN && st.sit==="cand" && linhas.some(l=>!l.v.viva)) h += `<div class="note">As restantes vacinas funcionam melhor se forem feitas até <b>${fmt(limN)}</b> (2 semanas antes de iniciar o tratamento imunossupressor/imunomodulador). Se não conseguir, faça-as na mesma.</div>`;
+  if(!semIS()) h += `<div class="note"><b>Vacinas vivas a evitar durante o tratamento imunossupressor/imunomodulador</b>, salvo indicação do seu médico:<ul><li>sarampo, papeira e rubéola (VASPR);</li><li>varicela;</li><li>febre amarela;</li><li>dengue;</li><li>vacina da gripe em spray nasal (a vacina da gripe injetável pode ser feita);</li><li>vacina da febre tifoide em cápsulas, tomada pela boca (a vacina injetável pode ser feita).</li></ul>${det?`<p style="margin:8px 0 0">Se o tratamento imunossupressor/imunomodulador for suspenso, estas vacinas só podem voltar a ser feitas depois de um intervalo de segurança (${esc(det.pos)}) e com indicação médica.</p>`:""}</div>`;
+  const nVac = new Set(linhas.map(l=>l.v.id)).size;
+  if(nVac>1 || temViva) h += `<div class="note"><b>Várias vacinas no mesmo dia.</b> ${nVac>1?"As vacinas podem ser dadas no mesmo dia, em locais diferentes do corpo, ou com qualquer intervalo entre elas.":""}${temViva?" A exceção são as vacinas vivas (sarampo, varicela, febre amarela, dengue): duas destas vacinas fazem-se no mesmo dia ou, se não for possível, com pelo menos 4 semanas de intervalo.":""}</div>`;
+  if(st.viajante) h += `<div class="note"><b>Viagens.</b> Se planeia viajar ou regressar ao seu país por um período longo, marque uma Consulta do Viajante 4 a 8 semanas antes da partida e leve esta folha.</div>`;
+  if(extras.length || st.notas.trim()){
+    h += `<div class="note"><b>Notas</b><ul>${extras.map(e=>`<li>${esc(e)}</li>`).join("")}${st.notas.trim()?st.notas.trim().split(/\n+/).map(n=>`<li>${esc(n)}</li>`).join(""):""}</ul></div>`;
+  }
+  h += `<div class="end">Leve esta folha e o boletim de vacinas quando for vacinar-se. Se tiver febre no dia marcado, adie a vacina e avise. Em caso de dúvida, fale com a equipa da consulta.<br>CARI · plano emitido a ${fmt(base)} · v0.3<br>Elaborado por Diana Póvoas et al., Equipa da Consulta de Avaliação de Risco Infecioso, Serviço de Doenças Infeciosas, Hospital de Curry Cabral – ULS São José.</div></div>`;
+  return h;
+}
+function folhaTexto(linhas){
+  const base = parse(st.consulta) || hoje;
+  let t = "PLANO DE VACINAÇÃO (CARI)\nData da consulta: "+fmt(base)+"\n\n";
+  linhas.forEach(l=>{ t += "[ ] "+l.v.nome+" ("+l.dose+"): "+l.quando+". "+l.custo+"\n"; });
+  outras().forEach(o=>{ t += "\n"+o.titulo+": "+o.como+"."+(o.datas.length?" "+o.datas.map(x=>x.txt+": "+fmt(x.d)).join("; ")+".":"")+"\n"; });
+  const limV = limiteVivas();
+  if(linhas.some(l=>l.v.viva) && limV) t += "\nVacinas vivas: última dose até "+fmt(limV)+".\n";
+  if(st.viajante) t += "\nViagens: marcar Consulta do Viajante 4 a 8 semanas antes da partida.\n";
+  if(st.notas.trim()) t += "\nNotas: "+st.notas.trim()+"\n";
+  return t;
+}
+function quemTxt(){
+  const det = st.condDet.trim(), fs = farms();
+  const quem = st.cond==="dii" ? "Utente com doença inflamatória imunomediada"+(det?" ("+det+")":"")
+             : st.cond==="ctx" ? "Utente candidato a transplante"+(det?" "+det:"")
+             : st.cond==="tx"  ? "Utente transplantado"+(det?" ("+det+")":"")
+             : st.cond==="out" && det ? "Utente com "+det : "Utente";
+  return quem+(quem==="Utente"?" ":", ")+(st.sit==="sob"?"sob":"com indicação para")+" terapêutica imunossupressora/imunomoduladora"+(fs.length?" ("+fs.map(f=>minus(f.op)).join(" + ")+")":"");
+}
+function selecionadas(){ return VACINAS.filter(v=>st.sel[v.id].on && !(v.viva && vivasBloqueadas())); }
+function vivasFrases(){
+  const fs = farms().filter(f=>!f.semIS), limV = limiteVivas(), r = [];
+  if(semIS()) r.push("Terapêutica atual sem contraindicação formal para vacinas vivas (imunomodulador não imunossupressor); decisão caso a caso.");
+  else if(st.sit==="sob") r.push("Vacinas vivas contraindicadas enquanto mantiver a imunossupressão ("+VIVAS_TXT+").");
+  else r.push("Vacinas vivas: podem ser administradas "+(limV?"até "+fmt(limV)+" ("+(preDias()/7)+" semanas antes do início previsto, desde que se mantenha essa data)":"até 4 semanas antes do início da imunossupressão")+"; ficam contraindicadas depois ("+VIVAS_TXT+").");
+  if(fs.length) r.push("Se a terapêutica for suspensa, intervalo mínimo até vacina viva: "+fs.map(f=>minus(f.op)+": "+f.pos).join("; ")+(fs.length>1?". Aplica-se o intervalo mais longo":"")+".");
+  return r;
+}
+function cartaTexto(){
+  const base = parse(st.consulta) || hoje, sels = selecionadas();
+  let t = "À equipa de enfermagem / vacinação do Centro de Saúde,\n\n"+quemTxt()+", avaliado em Consulta de Avaliação de Risco Infecioso (CARI) a "+fmt(base)+".\n\nSolicita-se a administração das seguintes vacinas:\n";
+  if(!sels.length) t += "(sem vacinas assinaladas)\n";
+  sels.forEach(v=>{ const s=st.sel[v.id]; const vr=v.vars.find(x=>x.id===s.v)||v.vars[0]; t += "- "+vr.carta.charAt(0).toUpperCase()+vr.carta.slice(1)+" ["+minus(custoOp(v,s))+"].\n"; });
+  t += "\nInformação adicional:\n";
+  vivasFrases().forEach(f=>{ t += "- "+f+"\n"; });
+  if(sels.length>1 || sels.some(v=>v.viva)){
+    t += "- Coadministração: as vacinas inativadas podem ser administradas no mesmo dia ou com qualquer intervalo, entre si e com vacinas vivas, em locais anatómicos diferentes (ou a pelo menos 2,5 cm no mesmo membro)";
+    if(sels.some(v=>v.viva)) t += "; as vacinas vivas injetáveis devem ser administradas no mesmo dia ou com intervalo mínimo de 4 semanas entre si";
+    t += " (Livro Azul da Imunização, DGS, cap. 10 e cap. 37, secção 4.4.3).\n";
+  }
+  t += "\nO utente leva consigo a folha com o plano, onde pode ser registada a data de cada administração.\n\nCom os melhores cumprimentos,";
+  return t;
+}
+function registoTexto(){
+  const base = parse(st.consulta) || hoje, sels = selecionadas(), outs = outras();
+  let t = "CARI, "+fmt(base)+". "+quemTxt()+".\n";
+  const i = parse(st.inicio); if(i && st.sit==="cand") t += "Início previsto da imunossupressão: "+fmt(i)+".\n";
+  t += "Vacinas recomendadas: "+(sels.length ? sels.map(v=>{ const s=st.sel[v.id]; const vr=v.vars.find(x=>x.id===s.v)||v.vars[0]; return v.nome+" ("+vr.op+")"; }).join("; ") : "nenhuma assinalada")+".\n";
+  vivasFrases().forEach(f=>{ t += f+"\n"; });
+  outs.forEach(o=>{ t += o.reg+(o.datas.length?". "+o.datas.map(x=>x.txt+": "+fmt(x.d)).join("; "):"")+".\n"; });
+  if(st.viajante) t += "Recomendada Consulta do Viajante.\n";
+  if(st.notas.trim()) t += "Notas: "+st.notas.trim()+"\n";
+  return t;
+}
+
+/* ---------- Render ---------- */
+let ultimas = [];
+function render(){
+  const bloq = vivasBloqueadas();
+  VACINAS.forEach(v=>{
+    const el = $("vac-"+v.id), cb = $("on-"+v.id);
+    const bloqueada = !!v.viva && bloq;
+    cb.disabled = bloqueada;
+    el.classList.toggle("off", bloqueada);
+    el.classList.toggle("on", st.sel[v.id].on && !bloqueada);
+  });
+  $("dInicio").disabled = st.sit==="sob";
+  const nf = farms().length;
+  $("sumFarm").textContent = "Fármacos / classes (pode escolher vários)"+(nf?": "+nf+" assinalado"+(nf>1?"s":""):"");
+  const r = TB.find(x=>x.id===st.tb.reg), ti = parse(st.tb.ini);
+  $("tbFim").textContent = ti ? "Fim previsto: "+fmt(soma(ti,["m",r.meses]))+"." : "Indique a data de início para calcular o fim previsto.";
+  ultimas = plano();
+  avisos(ultimas);
+  $("folha").innerHTML = folhaHTML(ultimas);
+  $("carta").textContent = cartaTexto();
+  $("registo").textContent = registoTexto();
+}
+function muda(e){
+  const t = e.target, val = t.type==="checkbox" ? t.checked : t.value;
+  if(!t.dataset) return;
+  if(t.dataset.v) st.sel[t.dataset.v][t.dataset.k] = val;
+  else if(t.dataset.f) st.farm[t.dataset.f] = val;
+  else if(t.dataset.s) st[t.dataset.s][t.dataset.k] = val;
+  else if(t.id==="dConsulta") st.consulta=val;
+  else if(t.id==="nome") st.nome=val;
+  else if(t.id==="dInicio") st.inicio=val;
+  else if(t.id==="dVac") st.dvac=val;
+  else if(t.id==="notas") st.notas=val;
+  else if(t.id==="cond") st.cond=val;
+  else if(t.id==="condDet") st.condDet=val;
+  else if(t.id==="viajante") st.viajante=val;
+  else if(t.name==="sit") st.sit=val;
+  else return;
+  render();
+}
+document.addEventListener("input", muda);
+document.addEventListener("change", muda);
+
+function diz(m){ $("status").textContent = m; }
+async function copia(txt, ok){
+  try{ await navigator.clipboard.writeText(txt); diz(ok); }
+  catch(_){ diz("Não foi possível copiar. Selecione o texto e copie manualmente."); }
+}
+$("btnCopiaFolha").addEventListener("click", ()=>copia(folhaTexto(ultimas),"Folha copiada como texto."));
+$("btnCopiaCarta").addEventListener("click", ()=>copia(cartaTexto(),"Texto para o centro de saúde copiado."));
+$("btnCopiaReg").addEventListener("click", ()=>copia(registoTexto(),"Resumo para registo copiado."));
+function temConteudo(){ return ultimas.length>0 || outras().length>0; }
+
+function documentoImpressao(){
+  const css = [...document.querySelectorAll("style")].map(s=>s.textContent).join("\n").split("/* Folha do utente")[1] || "";
+  return `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="utf-8"><title>Plano de vacinação</title><style>body{margin:0;background:#fff}/* ${css}
+.sheet{border:0;box-shadow:none;max-width:none;min-width:0;padding:0}@media screen{.sheet{max-width:794px;margin:24px auto;padding:0 16px}}</style></head><body>${folhaHTML(ultimas)}<script>window.addEventListener("load",function(){setTimeout(function(){window.print()},300)})<\/script></body></html>`;
+}
+let downloads = null;
+/* Fora do claude.ai (ficheiro exportado ou alojado noutro sítio) o browser imprime diretamente. */
+function ativaImpressao(){ $("btnImprimir").hidden = false; }
+$("btnImprimir").addEventListener("click", ()=>{
+  if(!temConteudo()){ diz("Assinale pelo menos uma vacina ou medida."); return; }
+  diz("");
+  window.print();
+});
+if(window.claude && typeof window.claude.use==="function"){
+  window.claude.use("downloads").then(d=>{ if(d){ downloads=d; $("btnFolha").hidden=false; } else ativaImpressao(); }).catch(ativaImpressao);
+} else {
+  ativaImpressao();
+}
+$("btnFolha").addEventListener("click", async ()=>{
+  if(!downloads) return;
+  if(!temConteudo()){ diz("Assinale pelo menos uma vacina ou medida."); return; }
+  try{
+    await downloads.save({filename:"plano-vacinacao-"+st.consulta+".html", data:documentoImpressao()});
+    diz("Folha descarregada. Abra o ficheiro: a janela de impressão abre sozinha.");
+  }catch(err){
+    const c = err && err.code;
+    diz(c==="declined" ? "Descarga cancelada." : c==="rate_limited" ? "Aguarde um momento e tente de novo." : "Não foi possível descarregar nesta vista. Use Copiar folha como texto.");
+  }
+});
+
+montaForm();
+render();
+</script>
+</body>
+</html>
