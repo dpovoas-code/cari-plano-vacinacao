@@ -1,7 +1,7 @@
 {
   "title": "CARI · Plano de vacinação: ferramenta de apoio à Consulta de Avaliação de Risco Infecioso",
   "upload_type": "software",
-  "description": "<p>Ferramenta web para apoio à explicação do calendário vacinal a pessoas candidatas a terapêutica imunossupressora/imunomoduladora, ou já sob esta. Gera uma folha para o utente, um texto para a equipa de vacinação do centro de saúde e um resumo para o registo clínico, de acordo com o Protocolo da Consulta de Avaliação de Risco Infecioso e o Livro Azul da Imunização (DGS). Não guarda nem envia dados. Ferramenta de apoio à comunicação: não substitui a decisão clínica.</p>",
+  "description": "<p>Ferramenta web para apoio à explicação do calendário vacinal a pessoas candidatas a terapêutica imunossupressora/imunomoduladora, ou já sob esta. Gera uma folha para o utente (em português ou inglês), um texto para a equipa de vacinação do centro de saúde e um resumo para o registo clínico, de acordo com o Protocolo da Consulta de Avaliação de Risco Infecioso e o Livro Azul da Imunização (DGS). Não guarda nem envia dados. Ferramenta de apoio à comunicação: não substitui a decisão clínica.</p><p><strong>English.</strong> Web tool supporting the explanation of vaccination schedules to people who are candidates for, or already receiving, immunosuppressive/immunomodulatory therapy. It produces a patient sheet (in Portuguese or English), a text for the health-centre vaccination team and a clinical record summary, following the protocol of the Infection Risk Assessment Clinic (CARI) and the Portuguese Directorate-General of Health (DGS) Immunisation Blue Book. It applies Portuguese national recommendations; information on free access refers to the Portuguese National Health Service (SNS). It stores and sends no data. Communication aid: it does not replace clinical decision-making.</p>",
   "creators": [
     {
       "name": "Póvoas, Diana",
@@ -9,8 +9,20 @@
       "orcid": "0000-0003-4531-2123"
     }
   ],
-  "keywords": ["vacinação", "imunossupressão", "imunocomprometidos", "risco infecioso", "calendário vacinal", "Portugal"],
+  "keywords": [
+    "vacinação",
+    "imunossupressão",
+    "imunocomprometidos",
+    "risco infecioso",
+    "calendário vacinal",
+    "Portugal",
+    "vaccination",
+    "immunosuppression",
+    "immunocompromised host",
+    "infection risk",
+    "vaccination schedule"
+  ],
   "language": "por",
   "license": "cc-by-nc-sa-4.0",
-  "notes": "Elaborado por Diana Póvoas et al., Equipa da Consulta de Avaliação de Risco Infecioso, Serviço de Doenças Infeciosas, Hospital de Curry Cabral – ULS São José."
+  "notes": "Elaborado por Diana Póvoas et al., Equipa da Consulta de Avaliação de Risco Infecioso, Serviço de Doenças Infeciosas, Hospital de Curry Cabral – ULS São José. Developed by Diana Póvoas et al., Infection Risk Assessment Clinic team, Department of Infectious Diseases, Hospital de Curry Cabral – ULS São José, Lisbon, Portugal. Interface available in Portuguese and English."
 }
