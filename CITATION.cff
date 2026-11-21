@@ -1,14 +1,18 @@
 cff-version: 1.2.0
-message: "Se utilizar esta ferramenta, cite-a da seguinte forma."
+message: "Se utilizar esta ferramenta, cite-a da seguinte forma. / If you use this tool, please cite it as below."
 type: software
 title: "CARI · Plano de vacinação: ferramenta de apoio à Consulta de Avaliação de Risco Infecioso"
-version: "0.3"
+version: "0.4"
 date-released: "2026-11-19"
 authors:
   - family-names: "Póvoas"
     given-names: "Diana"
     affiliation: "Serviço de Doenças Infeciosas, Hospital de Curry Cabral – ULS São José"
     orcid: "https://orcid.org/0000-0003-4531-2123"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.24371974"
+    description: "DOI da versão v0.3 (Zenodo)"
 repository-code: "https://github.com/dpovoas-code/cari-plano-vacinacao"
 url: "https://dpovoas-code.github.io/cari-plano-vacinacao/"
 abstract: >-
@@ -16,6 +20,9 @@ abstract: >-
   a terapêutica imunossupressora/imunomoduladora, ou já sob esta. Gera uma folha para
   o utente, um texto para a equipa de vacinação do centro de saúde e um resumo para
   o registo clínico, de acordo com o Protocolo CARI e o Livro Azul da Imunização (DGS).
+  English: web tool supporting the explanation of vaccination schedules to people who
+  are candidates for, or already receiving, immunosuppressive/immunomodulatory therapy,
+  following Portuguese national recommendations (DGS). Interface in Portuguese and English.
 keywords:
   - vacinação
   - imunossupressão
@@ -23,4 +30,7 @@ keywords:
   - risco infecioso
   - calendário vacinal
   - Portugal
+  - vaccination
+  - immunosuppression
+  - immunocompromised host
 license: "CC-BY-NC-SA-4.0"
