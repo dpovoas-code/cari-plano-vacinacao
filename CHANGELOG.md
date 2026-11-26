@@ -1,5 +1,10 @@
 # Registo de alterações / Changelog
 
+## v0.4.1 — 26/11/2026
+
+- Rodapé da página com aviso (não substitui a avaliação clínica nem o aconselhamento médico individual), forma de citar com DOI e licença / Page footer with disclaimer (does not replace clinical assessment or individual medical advice), citation with DOI and licence.
+- Folha do utente: nota de que o plano é individual e não substitui o aconselhamento médico; DOI e licença no rodapé / Patient sheet: note that the plan is individual and does not replace medical advice; DOI and licence in the footer.
+
 ## v0.4 — 19/11/2026
 
 - Interface bilingue português/inglês (botão PT/EN; a versão inglesa abre com `#en` no endereço) / Bilingual Portuguese/English interface (PT/EN button; `#en` opens the English version).

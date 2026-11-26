@@ -77,6 +77,10 @@ button[hidden]{display:none}
 .paperbox{overflow-x:auto}
 pre{white-space:pre-wrap;font-family:var(--body);font-size:15px;margin:0;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:10px}
 .foot{font-size:13px;color:var(--muted);margin:0}
+.pagefoot{margin:0 20px 24px;padding:14px 16px;border-top:2px solid var(--teal);background:var(--panel);border-radius:0 0 6px 6px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+.pagefoot p{margin:0;max-width:110ch}
+.pagefoot b{color:var(--ink)}
+.pagefoot a{color:var(--teal)}
 
 /* Folha do utente: sempre papel branco, por ser para imprimir */
 .sheet{background:#fff;color:#1b2529;width:100%;max-width:794px;min-width:560px;margin:0 auto;padding:36px 40px;border:1px solid #c6d3d4;box-shadow:0 2px 10px rgba(0,0,0,.12);font-family:Calibri,Carlito,Arial,sans-serif;font-size:15px;line-height:1.4;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -109,7 +113,7 @@ pre{white-space:pre-wrap;font-family:var(--body);font-size:15px;margin:0;backgro
 @page{size:A4;margin:16mm}
 @media print{
   html,body{background:#fff}
-  .top,.frame,.panel{display:none !important}
+  .top,.frame,.panel,.pagefoot{display:none !important}
   .wrap{display:block;padding:0}
   .paperbox{overflow:visible}
   .sheet{border:0;box-shadow:none;max-width:none;min-width:0;padding:0;margin:0}
@@ -228,15 +232,21 @@ pre{white-space:pre-wrap;font-family:var(--body);font-size:15px;margin:0;backgro
     </div>
   </section>
 </main>
+<footer class="pagefoot">
+  <p data-ih="fAviso"></p>
+  <p data-ih="fCitar"></p>
+  <p data-ih="fLic"></p>
+</footer>
 
 <script>
 "use strict";
-const VERSAO = "0.4";
+const VERSAO = "0.4.1";
+const DOI = "10.5281/zenodo.24371973";
 /* ---------- Textos da interface (PT / EN) ---------- */
 const UI = {
  hTitle:["CARI · Plano de vacinação","CARI · Vaccination plan"],
- hSub:["Assinale as opções após a avaliação. Nada do que escreve aqui é guardado. <strong>v"+VERSAO+", rascunho em validação (regras de 19/11/2026).</strong>",
-       "Tick the options after the assessment. Nothing you enter here is stored. <strong>v"+VERSAO+", draft under validation (rules as of 19/11/2026).</strong>"],
+ hSub:["Assinale as opções após a avaliação. Nada do que escreve aqui é guardado. <strong>v"+VERSAO+", rascunho em validação (regras de 26/11/2026).</strong>",
+       "Tick the options after the assessment. Nothing you enter here is stored. <strong>v"+VERSAO+", draft under validation (rules as of 26/11/2026).</strong>"],
  frame:["","<b>Portuguese setting.</b> This tool applies Portuguese national recommendations (Direção-Geral da Saúde, DGS; National Vaccination Programme, PNV) and the protocol of the Infection Risk Assessment Clinic (CARI). Information on free access refers to the Portuguese National Health Service (SNS). Review and adapt before use in other settings."],
  hConsulta:["Consulta","Consultation"],
  lConsulta:["Data da consulta","Date of consultation"],
@@ -282,10 +292,16 @@ const UI = {
  bCopiaReg:["Copiar resumo para registo","Copy record summary"],
  hCarta:["Texto para o centro de saúde (enfermagem / equipa de vacinação)","Text for the health centre (nursing / vaccination team), in Portuguese"],
  hReg:["Resumo para registo clínico","Clinical record summary, in Portuguese"],
- footFontes:["Fontes das regras: Protocolo CARI 2026; Livro Azul da Imunização (DGS), Partes 2 e 3; Normas DGS 013/2024, 002/2026, 006/2026, 007/2026, 007/2025, 006/2022; consenso ECTRIMS/EAN 2023; RCM. Ferramenta de apoio à comunicação: a decisão clínica é do médico.",
-             "Rule sources: CARI protocol 2026; DGS Livro Azul da Imunização (Immunisation Blue Book), Parts 2 and 3; DGS Normas 013/2024, 002/2026, 006/2026, 007/2026, 007/2025, 006/2022; ECTRIMS/EAN 2023 consensus; summaries of product characteristics. Communication aid: clinical decisions rest with the physician."],
+ footFontes:["Fontes das regras: Protocolo CARI 2026; Livro Azul da Imunização (DGS), Partes 2 e 3; Normas DGS 013/2024, 002/2026, 006/2026, 007/2026, 007/2025, 006/2022; consenso ECTRIMS/EAN 2023; RCM.",
+             "Rule sources: CARI protocol 2026; DGS Livro Azul da Imunização (Immunisation Blue Book), Parts 2 and 3; DGS Normas 013/2024, 002/2026, 006/2026, 007/2026, 007/2025, 006/2022; ECTRIMS/EAN 2023 consensus; summaries of product characteristics."],
  footAut:["Elaborado por Diana Póvoas et al., Equipa da Consulta de Avaliação de Risco Infecioso, Serviço de Doenças Infeciosas, Hospital de Curry Cabral – ULS São José.",
           "Developed by Diana Póvoas et al., Infection Risk Assessment Clinic (Consulta de Avaliação de Risco Infecioso) team, Department of Infectious Diseases, Hospital de Curry Cabral – ULS São José, Lisbon, Portugal."],
+ fAviso:["<b>Aviso.</b> Ferramenta de apoio à comunicação, destinada a profissionais de saúde. Não substitui a avaliação clínica nem o aconselhamento médico individual: as decisões cabem ao médico que acompanha o utente. As recomendações seguem as normas portuguesas em vigor à data desta versão (v"+VERSAO+") e devem ser confirmadas face a atualizações posteriores.",
+         "<b>Disclaimer.</b> A communication aid intended for healthcare professionals. It does not replace clinical assessment or individual medical advice: decisions rest with the physician caring for the patient. Recommendations follow the Portuguese guidance in force at the date of this version (v"+VERSAO+") and should be checked against later updates."],
+ fCitar:["<b>Como citar:</b> Póvoas D, et al. CARI · Plano de vacinação: ferramenta de apoio à Consulta de Avaliação de Risco Infecioso [software]. Equipa da Consulta de Avaliação de Risco Infecioso, Serviço de Doenças Infeciosas, Hospital de Curry Cabral – ULS São José; 2026. doi:<a href=\"https://doi.org/10.5281/zenodo.24371973\" target=\"_blank\" rel=\"noopener\">10.5281/zenodo.24371973</a>",
+         "<b>How to cite:</b> Póvoas D, et al. CARI · Plano de vacinação: a tool supporting the Infection Risk Assessment Clinic [software]. Infection Risk Assessment Clinic team, Department of Infectious Diseases, Hospital de Curry Cabral – ULS São José, Lisbon, Portugal; 2026. doi:<a href=\"https://doi.org/10.5281/zenodo.24371973\" target=\"_blank\" rel=\"noopener\">10.5281/zenodo.24371973</a>"],
+ fLic:["<b>Licença:</b> <a href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/deed.pt\" target=\"_blank\" rel=\"noopener\">CC BY-NC-SA 4.0</a>. Pode ser partilhada e adaptada, com atribuição da autoria, sem fins comerciais e com as adaptações sob a mesma licença. <a href=\"https://github.com/dpovoas-code/cari-plano-vacinacao\" target=\"_blank\" rel=\"noopener\">Código e histórico de versões</a>.",
+       "<b>Licence:</b> <a href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\" target=\"_blank\" rel=\"noopener\">CC BY-NC-SA 4.0</a>. It may be shared and adapted with attribution, for non-commercial purposes, with adaptations under the same licence. <a href=\"https://github.com/dpovoas-code/cari-plano-vacinacao\" target=\"_blank\" rel=\"noopener\">Source code and version history</a>."],
  lEsquema:["Esquema","Schedule"], lAcesso:["Acesso","Access"], lD1:["1.ª dose a partir de","1st dose from"],
  tViva:["viva","live"], tOpc:["opcional","optional"],
  viajante:["Recomendar Consulta do Viajante","Recommend a travel clinic appointment"],
@@ -679,8 +695,8 @@ function folhaHTML(lg){
     h += `<div class="note"><b>${en?"Notes":"Notas"}</b><ul>${extras.map(e=>`<li>${esc(e)}</li>`).join("")}${st.notas.trim()?st.notas.trim().split(/\n+/).map(n=>`<li>${esc(n)}</li>`).join(""):""}</ul></div>`;
   }
   h += en
-    ? `<div class="end">Bring this sheet and your vaccination record when you go for vaccination. If you have a fever on the day, postpone the vaccine and let the team know. If in doubt, contact the clinic team.<br>CARI · plan issued on ${fmt(base,lg)} · v${VERSAO} · based on Portuguese national recommendations (DGS)<br>${UI.footAut[1]}</div></div>`
-    : `<div class="end">Leve esta folha e o boletim de vacinas quando for vacinar-se. Se tiver febre no dia marcado, adie a vacina e avise. Em caso de dúvida, fale com a equipa da consulta.<br>CARI · plano emitido a ${fmt(base,lg)} · v${VERSAO}<br>${UI.footAut[0]}</div></div>`;
+    ? `<div class="end">Bring this sheet and your vaccination record when you go for vaccination. If you have a fever on the day, postpone the vaccine and let the team know. If in doubt, contact the clinic team.<br>This plan was prepared for you by the team that assessed you. It does not replace individual medical advice and should not be used for anyone else.<br>CARI · plan issued on ${fmt(base,lg)} · v${VERSAO} · based on Portuguese national recommendations (DGS)<br>${UI.footAut[1]}<br>doi:${DOI} · CC BY-NC-SA 4.0</div></div>`
+    : `<div class="end">Leve esta folha e o boletim de vacinas quando for vacinar-se. Se tiver febre no dia marcado, adie a vacina e avise. Em caso de dúvida, fale com a equipa da consulta.<br>Este plano foi preparado para si pela equipa que o avaliou. Não substitui o aconselhamento médico individual e não deve ser usado por outra pessoa.<br>CARI · plano emitido a ${fmt(base,lg)} · v${VERSAO}<br>${UI.footAut[0]}<br>doi:${DOI} · CC BY-NC-SA 4.0</div></div>`;
   return h;
 }
 function folhaTexto(lg){

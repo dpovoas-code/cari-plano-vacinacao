@@ -2,17 +2,24 @@ cff-version: 1.2.0
 message: "Se utilizar esta ferramenta, cite-a da seguinte forma. / If you use this tool, please cite it as below."
 type: software
 title: "CARI · Plano de vacinação: ferramenta de apoio à Consulta de Avaliação de Risco Infecioso"
-version: "0.4"
-date-released: "2026-11-19"
+version: "0.4.1"
+date-released: "2026-11-26"
 authors:
   - family-names: "Póvoas"
     given-names: "Diana"
     affiliation: "Serviço de Doenças Infeciosas, Hospital de Curry Cabral – ULS São José"
     orcid: "https://orcid.org/0000-0003-4531-2123"
+doi: "10.5281/zenodo.24371973"
 identifiers:
   - type: doi
+    value: "10.5281/zenodo.24371973"
+    description: "DOI de conceito: todas as versões / Concept DOI: all versions"
+  - type: doi
+    value: "10.5281/zenodo.24414885"
+    description: "DOI da versão v0.4 / DOI of version 0.4"
+  - type: doi
     value: "10.5281/zenodo.24371974"
-    description: "DOI da versão v0.3 (Zenodo)"
+    description: "DOI da versão v0.3 / DOI of version 0.3"
 repository-code: "https://github.com/dpovoas-code/cari-plano-vacinacao"
 url: "https://dpovoas-code.github.io/cari-plano-vacinacao/"
 abstract: >-
